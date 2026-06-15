@@ -1,0 +1,93 @@
+data:
+  food101_dir: "data/raw/food-101"
+  usda_nutrition_csv: "data/raw/usda_nutrition.csv"
+  processed_dir: "data/processed"
+  image_size: 224
+  num_workers: 2              # safe default for Windows DataLoader
+
+food_classifier:
+  model_name: "efficientnet_b3"   # matches saved checkpoint from epoch 1
+  num_classes: 101                 # Food-101 classes
+  pretrained: true                 # ImageNet pretrained weights
+  dropout: 0.3
+  batch_size: 48              # AMP frees VRAM, slightly larger batch than before
+  epochs: 30
+  lr: 0.001
+  lr_scheduler: "cosine"
+  weight_decay: 0.0001
+  early_stopping_patience: 5
+  save_path: "saved_models/food_classifier/best_model.pth"
+
+combined_classifier:
+  num_classes: 181                 # Food-101 (101) + Indian food (80)
+  batch_size: 28                   # reduced to avoid VRAM OOM during full fine-tune
+  phase1_epochs: 5                 # head-only warm-up
+  phase1_lr: 0.001
+  phase2_epochs: 20                # full fine-tune
+  phase2_lr: 0.0002                # lower LR for fine-tune
+  patience: 5
+  save_path: "saved_models/combined_classifier/best_model.pth"
+
+calorie_estimator:
+  input_features: 101              # food class probabilities as input
+  hidden_dims: [256, 128, 64]
+  output_targets:                  # multi-output regression
+    - calories
+    - protein_g
+    - carbs_g
+    - fat_g
+    - fiber_g
+  batch_size: 128
+  epochs: 50
+  lr: 0.001
+  save_path: "saved_models/calorie_estimator/best_model.pth"
+
+health_model:
+  # RandomForest deficiency classifier
+  deficiency_rf:
+    n_estimators: 200
+    max_depth: 10
+    class_weight: "balanced"
+    save_path: "saved_models/health_model/deficiency_rf.joblib"
+  # LSTM nutrition trend predictor
+  lstm:
+    input_size: 8                  # nutrients tracked per day
+    hidden_size: 64
+    num_layers: 2
+    seq_len: 14                    # 2-week lookback
+    dropout: 0.2
+    epochs: 100
+    lr: 0.001
+    save_path: "saved_models/health_model/lstm_trend.pth"
+  # Isolation Forest anomaly detection
+  anomaly:
+    contamination: 0.05
+    n_estimators: 100
+    save_path: "saved_models/health_model/anomaly_detector.joblib"
+
+recommender:
+  top_k: 10
+  nutrition_features:
+    - calories
+    - protein_g
+    - carbs_g
+    - fat_g
+    - fiber_g
+    - sugar_g
+    - sodium_mg
+    - iron_mg
+    - calcium_mg
+    - vitamin_c_mg
+  save_path: "saved_models/recommender/food_vectors.npz"
+
+daily_targets:
+  calories: 2000
+  protein_g: 50
+  carbs_g: 275
+  fat_g: 78
+  fiber_g: 28
+  sugar_g: 50
+  sodium_mg: 2300
+  iron_mg: 18
+  calcium_mg: 1000
+  vitamin_c_mg: 90

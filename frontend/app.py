@@ -254,7 +254,7 @@ def inject_css():
     .stSelectbox > div > div,
     .stTextInput > div > div,
     .stNumberInput > div > div {
-        background: rgba(255, 255, 255, 0.04) !important;
+        background: #111124 !important;
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
         border-radius: 10px !important;
         color: #E2E8F0 !important;
@@ -264,6 +264,12 @@ def inject_css():
     .stNumberInput > div > div:focus-within {
         border-color: rgba(124, 58, 237, 0.5) !important;
         box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15) !important;
+    }
+    .stSelectbox > div > div *,
+    .stTextInput > div > div *,
+    .stNumberInput > div > div * {
+        background-color: transparent !important;
+        color: #E2E8F0 !important;
     }
     .stTextInput input,
     .stNumberInput input {
